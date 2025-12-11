@@ -1513,34 +1513,105 @@ function filterMockProperties(params: PropertySearchParams): Property[] {
  * This function adapts the API response structure to match our expected format
  */
 function transformApiResponse(apiData: any): Property[] {
-  // Adapt this function based on the actual Sakani API response structure
+  // Handle Sakani API response structure
+  // The API might return data in different formats
+  
+  // If it's the location/details endpoint response
+  if (apiData.locations && Array.isArray(apiData.locations)) {
+    const properties: Property[] = []
+    
+    apiData.locations.forEach((location: any) => {
+      if (location.units && Array.isArray(location.units)) {
+        location.units.forEach((unit: any) => {
+          properties.push({
+            id: unit.id || unit.unit_id || String(unit._id) || `unit_${Date.now()}_${Math.random()}`,
+            title: unit.title || unit.name || unit.unit_title || location.name || 'عقار للبيع',
+            description: unit.description || unit.details || location.description || unit.unit_description || 'عقار مميز في موقع استراتيجي',
+            price: unit.price || unit.price_amount || unit.total_price || location.price || 0,
+            city: location.city || location.city_name || unit.city || '',
+            propertyType: unit.property_type || unit.unit_type || location.property_type || 'شقة',
+            bedrooms: unit.bedrooms || unit.bedroom_count || location.bedrooms || 0,
+            bathrooms: unit.bathrooms || unit.bathroom_count || location.bathrooms,
+            area: unit.area || unit.size || unit.square_meters || unit.sqm || location.area || 0,
+            image: unit.image || unit.primary_image || unit.images?.[0] || location.image || location.primary_image || '',
+            images: unit.images || location.images || [],
+            purpose: unit.purpose || location.purpose || (unit.for_rent ? 'rent' : 'sale'),
+            location: location.coordinates ? {
+              latitude: location.coordinates.lat || location.coordinates[1],
+              longitude: location.coordinates.lng || location.coordinates[0],
+            } : undefined,
+            amenities: unit.amenities || location.amenities || [],
+            createdAt: unit.created_at || location.created_at,
+            updatedAt: unit.updated_at || location.updated_at,
+          })
+        })
+      } else {
+        // If no units, create a property from the location itself
+        properties.push({
+          id: location.id || location.location_id || String(location._id) || `loc_${Date.now()}_${Math.random()}`,
+          title: location.name || location.title || 'عقار للبيع',
+          description: location.description || 'عقار مميز في موقع استراتيجي',
+          price: location.price || location.price_amount || 0,
+          city: location.city || location.city_name || '',
+          propertyType: location.property_type || 'شقة',
+          bedrooms: location.bedrooms || 0,
+          bathrooms: location.bathrooms,
+          area: location.area || location.size || 0,
+          image: location.image || location.primary_image || '',
+          images: location.images || [],
+          purpose: location.purpose || (location.for_rent ? 'rent' : 'sale'),
+          location: location.coordinates ? {
+            latitude: location.coordinates.lat || location.coordinates[1],
+            longitude: location.coordinates.lng || location.coordinates[0],
+          } : undefined,
+          amenities: location.amenities || [],
+          createdAt: location.created_at,
+          updatedAt: location.updated_at,
+        })
+      }
+    })
+    
+    return properties
+  }
+  
+  // If it's a direct array
   if (Array.isArray(apiData)) {
     return apiData.map((item: any) => ({
-      id: item.id || item.propertyId || String(item._id),
-      title: item.title || item.name || item.propertyTitle,
-      description: item.description || item.details || '',
-      price: item.price || item.priceAmount || 0,
-      city: item.city || item.location?.city || '',
-      propertyType: item.propertyType || item.type || item.category || '',
-      bedrooms: item.bedrooms || item.bedroomCount || 0,
-      bathrooms: item.bathrooms || item.bathroomCount,
-      area: item.area || item.size || item.squareMeters || 0,
-      image: item.image || item.primaryImage || item.images?.[0] || item.thumbnail,
+      id: item.id || item.propertyId || item.unit_id || String(item._id),
+      title: item.title || item.name || item.propertyTitle || item.unit_title || 'عقار للبيع',
+      description: item.description || item.details || item.unit_description || 'عقار مميز في موقع استراتيجي',
+      price: item.price || item.price_amount || item.total_price || 0,
+      city: item.city || item.city_name || item.location?.city || '',
+      propertyType: item.property_type || item.propertyType || item.type || item.unit_type || 'شقة',
+      bedrooms: item.bedrooms || item.bedroom_count || item.bedroomCount || 0,
+      bathrooms: item.bathrooms || item.bathroom_count || item.bathroomCount,
+      area: item.area || item.size || item.square_meters || item.sqm || item.squareMeters || 0,
+      image: item.image || item.primary_image || item.primaryImage || item.images?.[0] || item.thumbnail || '',
       images: item.images || (item.image ? [item.image] : []),
-      purpose: item.purpose || item.listingType || (item.forRent ? 'rent' : 'sale'),
+      purpose: item.purpose || item.listingType || (item.for_rent || item.forRent ? 'rent' : 'sale'),
       location: item.location?.coordinates ? {
-        latitude: item.location.coordinates[1] || item.location.lat,
-        longitude: item.location.coordinates[0] || item.location.lng,
+        latitude: item.location.coordinates[1] || item.location.coordinates.lat || item.location.lat,
+        longitude: item.location.coordinates[0] || item.location.coordinates.lng || item.location.lng,
       } : item.location,
       amenities: item.amenities || item.features || [],
-      createdAt: item.createdAt || item.created,
-      updatedAt: item.updatedAt || item.updated,
+      createdAt: item.created_at || item.createdAt || item.created,
+      updatedAt: item.updated_at || item.updatedAt || item.updated,
     }))
   }
   
   // If response has a data property
-  if (apiData.data && Array.isArray(apiData.data)) {
-    return transformApiResponse(apiData.data)
+  if (apiData.data) {
+    if (Array.isArray(apiData.data)) {
+      return transformApiResponse(apiData.data)
+    }
+    if (apiData.data.locations) {
+      return transformApiResponse(apiData.data)
+    }
+  }
+  
+  // If response has results
+  if (apiData.results && Array.isArray(apiData.results)) {
+    return transformApiResponse(apiData.results)
   }
   
   return []
@@ -1572,48 +1643,115 @@ export async function searchProperties(
   }
 
   try {
-    // In static export mode (GitHub Pages), API routes don't work
-    // Skip API call and use mock data directly
+    // Try to use real Sakani API
     if (typeof window !== 'undefined') {
-      // Check if we're in a static export environment
-      const isStaticExport = window.location.pathname.includes('/bank-albilad-demo') || 
-                            process.env.NODE_ENV === 'production'
+      const isStaticExport = window.location.pathname.includes('/bank-albilad-demo')
       
-      // Try API route only if not in static export
+      // In development, try API route proxy first
       if (!isStaticExport) {
-        // Build query parameters for the proxy API route
-        const queryParams = new URLSearchParams()
-        
-        if (params.query) queryParams.append('query', params.query)
-        if (params.city) queryParams.append('city', params.city)
-        if (params.propertyType) queryParams.append('propertyType', params.propertyType)
-        if (params.purpose) queryParams.append('purpose', params.purpose)
-        if (params.minPrice) queryParams.append('minPrice', params.minPrice)
-        if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice)
-        if (params.bedrooms) queryParams.append('bedrooms', params.bedrooms)
-        if (params.page) queryParams.append('page', String(params.page))
-        if (params.limit) queryParams.append('limit', String(params.limit))
-
         try {
-          // Use Next.js API route as proxy to avoid CORS issues
+          const queryParams = new URLSearchParams()
+          if (params.query) queryParams.append('query', params.query)
+          if (params.city) queryParams.append('city', params.city)
+          if (params.propertyType) queryParams.append('propertyType', params.propertyType)
+          if (params.purpose) queryParams.append('purpose', params.purpose)
+          if (params.minPrice) queryParams.append('minPrice', params.minPrice)
+          if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice)
+          if (params.bedrooms) queryParams.append('bedrooms', params.bedrooms)
+
           const response = await fetch(`/api/sakani/search?${queryParams.toString()}`, {
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
           })
 
           if (response.ok) {
             const data = await response.json()
-            const properties = transformApiResponse(data.data || data)
-            if (properties.length > 0) {
-              return properties
+            if (!data.fallback && (data.locations || data.data || Array.isArray(data))) {
+              const properties = transformApiResponse(data)
+              if (properties.length > 0) {
+                return properties
+              }
             }
           }
         } catch (apiError) {
-          // API route failed, fall through to mock data
-          console.warn('API route unavailable, using mock data')
+          console.warn('API route unavailable, trying direct API call')
         }
+      }
+      
+      // Try calling Sakani API directly (may have CORS issues)
+      try {
+        // Use the location/details endpoint with project IDs
+        const projectIds = [
+          'project_1594', 'project_1629', 'project_1062', 'project_1458', 'project_1223',
+          'project_1421', 'project_1220', 'project_1129', 'project_1227', 'project_1045',
+          'project_1424', 'project_1455', 'project_1493', 'project_1437', 'project_1446',
+          'project_1339', 'project_1415', 'project_684', 'project_1363', 'project_1452'
+        ]
+        
+        const idsParam = projectIds.join(',')
+        const apiUrl = `https://sakani.sa/marketplaceApi/search/v3/location/details?ids=${idsParam}&filter[mode]=unit`
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'accept-language': 'ar',
+            'app-locale': 'ar',
+            'content-type': 'application/json',
+            'platform': 'web',
+            'referer': 'https://sakani.sa/app/marketplace',
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const properties = transformApiResponse(data)
+          
+          // Apply client-side filtering based on search params
+          let filtered = properties
+          
+          if (params.city) {
+            filtered = filtered.filter((p) => p.city === params.city)
+          }
+          if (params.propertyType) {
+            filtered = filtered.filter((p) => p.propertyType === params.propertyType)
+          }
+          if (params.bedrooms) {
+            const beds = parseInt(params.bedrooms)
+            if (params.bedrooms === '5+') {
+              filtered = filtered.filter((p) => p.bedrooms >= 5)
+            } else {
+              filtered = filtered.filter((p) => p.bedrooms === beds)
+            }
+          }
+          if (params.purpose) {
+            filtered = filtered.filter((p) => p.purpose === params.purpose)
+          }
+          if (params.minPrice) {
+            const min = parseInt(params.minPrice)
+            filtered = filtered.filter((p) => p.price >= min)
+          }
+          if (params.maxPrice) {
+            const max = parseInt(params.maxPrice)
+            filtered = filtered.filter((p) => p.price <= max)
+          }
+          if (params.query) {
+            const query = params.query.toLowerCase()
+            filtered = filtered.filter(
+              (p) =>
+                p.title.toLowerCase().includes(query) ||
+                p.description.toLowerCase().includes(query) ||
+                p.city.toLowerCase().includes(query)
+            )
+          }
+          
+          if (filtered.length > 0) {
+            return filtered
+          }
+        }
+      } catch (directApiError: any) {
+        // CORS or other error - will fall back to mock data
+        console.warn('Direct API call failed (likely CORS):', directApiError.message)
       }
     }
     
@@ -1621,9 +1759,6 @@ export async function searchProperties(
     return filterMockProperties(params)
   } catch (error: any) {
     console.error('Error fetching properties from Sakani API:', error)
-    
-    // Fallback to mock data on error
-    console.warn('Falling back to mock data due to API error')
     return filterMockProperties(params)
   }
 }
@@ -1648,9 +1783,9 @@ export async function getPropertyDetails(id: string): Promise<Property> {
     // In static export mode (GitHub Pages), API routes don't work
     // Use mock data directly
     if (typeof window !== 'undefined') {
-      const isStaticExport = window.location.pathname.includes('/bank-albilad-demo') || 
-                            process.env.NODE_ENV === 'production'
-      
+      const isStaticExport = window.location.pathname.includes('/bank-albilad-demo') ||
+        process.env.NODE_ENV === 'production'
+
       // Try API route only if not in static export
       if (!isStaticExport) {
         try {
@@ -1674,13 +1809,13 @@ export async function getPropertyDetails(id: string): Promise<Property> {
         }
       }
     }
-    
+
     // Use mock data (for static export or when API fails)
     const property = mockProperties.find((p) => p.id === id)
     if (property) {
       return property
     }
-    
+
     throw new Error('Property not found')
   } catch (error: any) {
     console.error('Error fetching property details from Sakani API:', error)
