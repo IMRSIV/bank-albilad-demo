@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import SearchBar from '@/components/SearchBar'
 import FilterPanel from '@/components/FilterPanel'
 import PropertyCard from '@/components/PropertyCard'
-import ApiStatus from '@/components/ApiStatus'
 import { searchProperties, PropertySearchParams, Property } from '@/services/sakaniApi'
 
 export default function Home() {
@@ -41,7 +40,6 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <ApiStatus />
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-bank-primary mb-2">
           البحث عن عقار

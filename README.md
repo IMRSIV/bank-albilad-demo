@@ -87,6 +87,33 @@ npm run dev
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+## GitHub Pages Deployment
+
+The app is configured for GitHub Pages with automatic deployment via GitHub Actions.
+
+**Live Demo:** [https://imrsiv.github.io/bank-albilad-demo/](https://imrsiv.github.io/bank-albilad-demo/)
+
+### Setup GitHub Pages
+
+1. **Enable GitHub Pages:**
+   - Go to repository Settings → Pages
+   - Under "Source", select **"GitHub Actions"**
+   - Save
+
+2. **Push to deploy:**
+   ```bash
+   git push origin main
+   ```
+   The GitHub Actions workflow will automatically build and deploy.
+
+3. **View deployment:**
+   - Check the "Actions" tab for build status
+   - Once complete, your site will be live at the URL above
+
+See [GITHUB_PAGES_DEPLOYMENT.md](./GITHUB_PAGES_DEPLOYMENT.md) for detailed instructions.
+
+**Note:** The app uses mock data in static export mode (GitHub Pages). API routes are disabled as they require a server.
+
 ## Project Structure
 
 ```
