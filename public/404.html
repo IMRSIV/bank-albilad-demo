@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bank AlBilad - Sakani Real Estate Search</title>
+  <script>
+    // Redirect to base path if not already there
+    const basePath = '/bank-albilad-demo';
+    const currentPath = window.location.pathname;
+    
+    if (!currentPath.startsWith(basePath)) {
+      window.location.href = basePath + (currentPath === '/' ? '' : currentPath);
+    } else {
+      // If already on base path, redirect to index
+      window.location.href = basePath + '/';
+    }
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+    <h1>جاري التحميل...</h1>
+    <p>Loading...</p>
+  </div>
+</body>
+</html>
+
